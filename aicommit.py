@@ -99,7 +99,7 @@ class CommitMessageGenerator:
             <description or summary in bullet point format>
 
             {git_diff}
-        """  # noqa: E501
+        """
         return prompt
 
     def call_gemini_api(self, prompt: str) -> str:

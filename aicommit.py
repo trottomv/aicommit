@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-class CommitMessageGenerator:
+class AICommitMessageGenerator:
     """
     A class to generate commit messages using the Gemini API based on a Git diff.
 
@@ -162,4 +162,4 @@ class CommitMessageGenerator:
 
 
 if __name__ == "__main__":
-    CommitMessageGenerator().run()
+    AICommitMessageGenerator().run()

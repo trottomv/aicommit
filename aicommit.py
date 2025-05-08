@@ -92,6 +92,7 @@ class AICommitMessageGenerator:
             - Follow the 50/70 rule: the summary line should be ≤ 50 characters,
               and each line in the description should be ≤ 70 characters.
             - Use plain English with no special characters or emojis.
+            - Avoid putting a period at the end of sentences.
             - Format the output as follows:
 
             <commit message>

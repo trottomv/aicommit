@@ -22,13 +22,13 @@ class AICommitMessageGenerator:
 
     """
 
-    def __init__(self, model: str = "gemini-2.0-flash"):
+    def __init__(self, model: str = "gemini-2.5-flash"):
         """
         Initialize the CommitMessageGenerator with the API key and model.
 
         Args:
             model (str): The name of the Gemini model to use.
-                Default is "gemini-2.0-flash".
+                Default is "gemini-2.5-flash".
 
         """
         self.API_KEY = os.getenv("GEMINI_API_KEY")

@@ -1,5 +1,6 @@
 """A script that generate a commit message using the Gemini API."""
 
+import argparse
 import json
 import logging
 import os
@@ -15,14 +16,15 @@ class AICommitMessageGenerator:
     A class to generate commit messages using the Gemini API based on a Git diff.
 
     Attributes:
-        API_KEY (str): API key for the Gemini API.
+        GEMINI_API_KEY (str): API key for the Gemini API.
+        MISTRAL_API_KEY (str): API key for the Mistral API.
         LLM_MODEL (str): The name of the Gemini model to use.
-        BASE_URL (str): The base url for the Gemini API.
+        BASE_URL (str): The base url for the Gemini and Mistral API.
         repo_path (str): Path to the Git repository.
 
     """
 
-    def __init__(self, model: str = "gemini-2.5-flash"):
+    def __init__(self, model: str = "gemini"):
         """
         Initialize the CommitMessageGenerator with the API key and model.
 
@@ -31,13 +33,25 @@ class AICommitMessageGenerator:
                 Default is "gemini-2.5-flash".
 
         """
-        self.API_KEY = os.getenv("GEMINI_API_KEY")
-        self.LLM_MODEL = model
-        self.BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
+        LLM_MODELS = {
+            "gemini": "gemini-2.5-flash",
+            "gemini-2": "gemini-2.0-flash",
+            "mistral": "mistral-small-latest",
+            "mistral-large": "mistral-large-latest",
+        }
+        self.LLM_MODEL = LLM_MODELS.get(model)
+        self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        self.MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+        if "gemini" in self.LLM_MODEL:
+            self.BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
+        if "mistral" in self.LLM_MODEL:
+            self.BASE_URL = "https://api.mistral.ai/v1/chat/completions"
         self.repo_path = os.getcwd()
 
-        if not self.API_KEY:
-            raise OSError("GEMINI_API_KEY environment variable is not set.")
+        if not self.GEMINI_API_KEY and not self.MISTRAL_API_KEY:
+            raise OSError(
+                "GEMINI_API_KEY or MISTRAL_API_KEY environment variable is not set."
+            )
 
     def check_git_status(self) -> None | OSError:
         """
@@ -114,22 +128,78 @@ class AICommitMessageGenerator:
             str: The commit message returned by the model.
 
         """
-        url = f"{self.BASE_URL}{self.LLM_MODEL}:generateContent?key={self.API_KEY}"
-
+        url = (
+            f"{self.BASE_URL}{self.LLM_MODEL}:generateContent?key={self.GEMINI_API_KEY}"
+        )
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
-
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-
         with urllib.request.urlopen(request) as response:
             response_data = response.read()
             response_json = json.loads(response_data)
-
         return response_json["candidates"][0]["content"]["parts"][0]["text"]
+
+    def call_mistral_api(self, prompt: str) -> str:
+        """
+        Send the prompt to the Mistral API and retrieve the response.
+
+        Args:
+            prompt (str): The prompt to send.
+
+        Returns:
+            str: The commit message returned by the model.
+
+        """
+        payload = {
+            "model": self.LLM_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        payload = {
+            "model": self.LLM_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        request = urllib.request.Request(
+            self.BASE_URL,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self.MISTRAL_API_KEY}",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request) as response:
+                response_data = response.read()
+                response_json = json.loads(response_data)
+        except urllib.error.HTTPError as e:
+            print("Errore HTTP:", e.code)
+            print("Dettagli:", e.read().decode())
+            raise ValueError("HTTP error occurred while calling Mistral API.") from e
+        else:
+            return response_json["choices"][0]["message"]["content"]
+
+    def call_api(self, prompt: str) -> str:
+        """
+        Call the appropriate API based on the model specified.
+
+        Args:
+            prompt (str): The prompt to send.
+
+        Returns:
+            str: The commit message returned by the model.
+
+        """
+        if "gemini" in self.LLM_MODEL:
+            return self.call_gemini_api(prompt)
+        elif "mistral" in self.LLM_MODEL:
+            return self.call_mistral_api(prompt)
+        else:
+            raise ValueError("Unsupported model specified.")
 
     def commit_changes(self, message: str):
         """
@@ -150,17 +220,22 @@ class AICommitMessageGenerator:
         except OSError as err:
             logger.error(err)
             return
-
         diff = self.get_git_diff()
-
         if not diff.strip():
             logger.warning("No changes to commit.")
             return
-
         prompt = self.build_prompt(diff)
-        commit_message = self.call_gemini_api(prompt)
+        commit_message = self.call_api(prompt)
         self.commit_changes(commit_message)
 
 
 if __name__ == "__main__":
-    AICommitMessageGenerator().run()
+    parser = argparse.ArgumentParser(description="AI commit message generator.")
+    parser.add_argument(
+        "model",
+        nargs="?",
+        default="gemini",
+        help="LLM model to use (e.g., gemini, mistral)",
+    )
+    args = parser.parse_args()
+    AICommitMessageGenerator(model=args.model).run()

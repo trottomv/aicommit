@@ -16,7 +16,7 @@ git clone https://github.com/trottomv/aicommit
 
 Edit ~/.bashrc
 ```bash
-alias aicommit='GEMINI_API_KEY=<your-api-key> python3 -m ~/aicommit/aicommit.py'
+alias aicommit='GEMINI_API_KEY=<gemini-api-key> MISTRAL_API_KEY=<mistral-api-key> python3 -m ~/aicommit/aicommit.py'
 ```
 
 ## Example usage

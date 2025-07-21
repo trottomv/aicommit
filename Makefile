@@ -1,4 +1,4 @@
 .PHONY: fix
 fix:  ## Fix Python code formatting, linting and sorting imports
-	python3 -m ruff format .
-	python3 -m ruff check --fix .
+	uv tool run ruff format .
+	uv tool run ruff check --fix .

@@ -24,34 +24,45 @@ class AICommitMessageGenerator:
 
     """
 
-    def __init__(self, model: str = "gemini"):
+    def __init__(self, model: str = "gemini", service: str = None):
         """
         Initialize the CommitMessageGenerator with the API key and model.
 
         Args:
             model (str): The name of the Gemini model to use.
                 Default is "gemini-2.5-flash".
+            service (str): The API service to use.
+                Default is "None".
 
         """
+        self.SERVICE = service
         LLM_MODELS = {
             "gemini": "gemini-2.5-flash",
             "gemini-2": "gemini-2.0-flash",
-            "mistral": "mistral-small-latest",
+            "mistral-small": "mistral-small-latest",
             "mistral-large": "mistral-large-latest",
         }
-        self.LLM_MODEL = LLM_MODELS.get(model)
+        self.LLM_MODEL = LLM_MODELS.get(model, model)
         self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
         self.MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-        if "gemini" in self.LLM_MODEL:
+        if "ollama" in service:
+            self.OLLAMA_BASE_URL = os.getenv(
+                "OLLAMA_BASE_URL", "http://localhost:11434"
+            )
+            self.BASE_URL = f"{self.OLLAMA_BASE_URL}/v1/chat/completions"
+        elif "gemini" in model:
             self.BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
-        if "mistral" in self.LLM_MODEL:
+        elif "mistral" in model:
             self.BASE_URL = "https://api.mistral.ai/v1/chat/completions"
-        self.repo_path = os.getcwd()
-
-        if not self.GEMINI_API_KEY and not self.MISTRAL_API_KEY:
+        if (
+            "ollama" not in service
+            and not self.GEMINI_API_KEY
+            and not self.MISTRAL_API_KEY
+        ):
             raise OSError(
                 "GEMINI_API_KEY or MISTRAL_API_KEY environment variable is not set."
             )
+        self.repo_path = os.getcwd()
 
     def check_git_status(self) -> None | OSError:
         """
@@ -101,12 +112,14 @@ class AICommitMessageGenerator:
             Guidelines:
             - Do NOT include prefixes like 'feat:' or 'fix:' in the commit message.
             - Do NOT include the given git diff in the commit message.
+            - Do NOT use code blocks or markdown formatting.
             - Always include a bullet point summary of the changes,
               using '-' as the bullet character.
             - Follow the 50/70 rule: the summary line should be ≤ 50 characters,
               and each line in the description should be ≤ 70 characters.
             - Use plain English with no special characters or emojis.
             - Avoid putting a period at the end of sentences.
+            - Give me only the commit message as output, without any additional text.
             - Format the output as follows:
 
             <commit message>
@@ -158,10 +171,6 @@ class AICommitMessageGenerator:
             "model": self.LLM_MODEL,
             "messages": [{"role": "user", "content": prompt}],
         }
-        payload = {
-            "model": self.LLM_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-        }
         request = urllib.request.Request(
             self.BASE_URL,
             data=json.dumps(payload).encode("utf-8"),
@@ -183,6 +192,38 @@ class AICommitMessageGenerator:
         else:
             return response_json["choices"][0]["message"]["content"]
 
+    def call_ollama_api(self, prompt: str) -> str:
+        """
+        Send the prompt to the Ollama API and retrieve the response.
+
+        Args:
+            prompt (str): The prompt to send.
+
+        Returns:
+            str: The commit message returned by the model.
+
+        """
+        payload = {
+            "model": self.LLM_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+        request = urllib.request.Request(
+            self.BASE_URL,
+            data=json.dumps(payload).encode("utf-8"),
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request) as response:
+                response_data = response.read()
+                response_json = json.loads(response_data)
+        except urllib.error.HTTPError as e:
+            print("Errore HTTP:", e.code)
+            print("Dettagli:", e.read().decode())
+            raise ValueError("HTTP error occurred while calling Ollama API.") from e
+        else:
+            return response_json["choices"][0]["message"]["content"]
+
     def call_api(self, prompt: str) -> str:
         """
         Call the appropriate API based on the model specified.
@@ -194,9 +235,11 @@ class AICommitMessageGenerator:
             str: The commit message returned by the model.
 
         """
-        if "gemini" in self.LLM_MODEL:
+        if "ollama" in self.SERVICE:
+            return self.call_ollama_api(prompt)
+        elif "gemini" in self.SERVICE:
             return self.call_gemini_api(prompt)
-        elif "mistral" in self.LLM_MODEL:
+        elif "mistral" in self.SERVICE:
             return self.call_mistral_api(prompt)
         else:
             raise ValueError("Unsupported model specified.")
@@ -234,8 +277,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "model",
         nargs="?",
-        default="gemini",
-        help="LLM model to use (e.g., gemini, mistral)",
+        default="mistral",
+        help="LLM model to use (e.g., mistral, llama3.2, "
+        "gemini, mistral-small, mistral-large)",
+    )
+    parser.add_argument(
+        "service",
+        nargs="?",
+        default="ollama",
+        help="API service to use (e.g., ollama, gemini, mistral)",
     )
     args = parser.parse_args()
-    AICommitMessageGenerator(model=args.model).run()
+    AICommitMessageGenerator(model=args.model, service=args.service).run()

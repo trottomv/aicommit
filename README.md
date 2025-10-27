@@ -44,7 +44,7 @@ aicommit
 
 ### Model Selection
 
-By default, `aicommit` uses the `gemini-2.5-flash` model. 
+By default, `aicommit` uses the `mistral` model. 
 You can select a different model by passing an argument. 
 The available options are:
 
@@ -52,17 +52,38 @@ The available options are:
 |-----------------|------------------------|
 | (none)          | `gemini-2.5-flash`     |
 | `gemini-2`      | `gemini-2.0-flash`     |
-| `mistral`       | `mistral-small-latest` |
+| `mistral-small` | `mistral-small-latest` |
 | `mistral-large` | `mistral-large-latest` |
+| `mistral`       | `mistral`              |
+| `llama3.2`      | `llama3.2`             |
+
+
+### Service Selection
+
+By default, `aicommit` uses the `ollama` service. 
+You can select a different API service by passing an argument. 
+The available options are:
+
+| Argument        | API Service Used       |
+|-----------------|------------------------|
+| (none)          | `ollama`               |
+| `gemini`        | `gemini`               |
+| `mistral`       | `mistral`              |
 
 **Examples:**
 
 ```bash
 # Use the gemini-2.0-flash model
-aicommit gemini-2
+aicommit gemini-2 gemini
 
 # Use the mistral-large-latest model
-aicommit mistral-large
+aicommit mistral-large mistral
+
+# Use the mistral model on ollama api service
+aicommit mistral ollama 
+
+# Use the llama3.2 model on ollama api service
+aicommit llama3.2 mistral ollama 
 ```
 
 ## Example output

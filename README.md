@@ -2,7 +2,8 @@
 
 A command-line tool that generates commit messages using Large Language Models (LLMs) from various API providers.
 
-It uses the [Gemini API](https://ai.google.dev/gemini-api/docs) and [Mistral API](https://docs.mistral.ai/api/) to generate commit messages based on the changes made in your git repository.
+It uses [Gemini API](https://ai.google.dev/gemini-api/docs) or [Mistral API](https://docs.mistral.ai/api/) or Ollama API 
+to generate commit messages based on the changes made in your git repository.
 
 ## Requirements
 - Python >= 3.8
@@ -50,13 +51,13 @@ The available options are:
 
 | Argument        | Model Used             |
 |-----------------|------------------------|
-| (none)          | `gemini-2.5-flash`     |
+| `gemini`        | `gemini-2.5-flash`     |
 | `gemini-2`      | `gemini-2.0-flash`     |
 | `mistral-small` | `mistral-small-latest` |
 | `mistral-large` | `mistral-large-latest` |
 | `mistral`       | `mistral`              |
 | `llama3.2`      | `llama3.2`             |
-
+| `qwen3`         | `qwen3`                |
 
 ### Service Selection
 
@@ -66,7 +67,7 @@ The available options are:
 
 | Argument        | API Service Used       |
 |-----------------|------------------------|
-| (none)          | `ollama`               |
+| `ollama`        | `ollama`               |
 | `gemini`        | `gemini`               |
 | `mistral`       | `mistral`              |
 
@@ -83,7 +84,7 @@ aicommit mistral-large mistral
 aicommit mistral ollama 
 
 # Use the llama3.2 model on ollama api service
-aicommit llama3.2 mistral ollama 
+aicommit llama3.2 ollama 
 ```
 
 ## Example output

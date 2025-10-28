@@ -113,20 +113,24 @@ class AICommitMessageGenerator:
             - Do NOT include prefixes like 'feat:' or 'fix:' in the commit message.
             - Do NOT include the given git diff in the commit message.
             - Do NOT use code blocks or markdown formatting.
-            - Always include a bullet point summary of the changes,
-              using '-' as the bullet character.
-            - Follow the 50/70 rule: the summary line should be ≤ 50 characters,
-              and each line in the description should be ≤ 70 characters.
+            - Always include a bullet point summary of the changes, using '-' as the bullet character.
+            - Follow the 50/70 rule: the summary line should be ≤ 50 characters, and each line in the description should be ≤ 70 characters.
             - Use plain English with no special characters or emojis.
             - Avoid putting a period at the end of sentences.
             - Give me only the commit message as output, without any additional text.
+            - Do NOT use multi-line code blocks or markdown formatting in the commit message.
+            - Always return the commit message as plain text, without any additional formatting.
+            - Leave a blank line between the commit message and the change summary.
             - Format the output as follows:
 
             <commit message>
 
             <description or summary in bullet point format>
 
+            Git diff:
+            ```
             {git_diff}
+            ```
         """
         return prompt
 
@@ -277,14 +281,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "model",
         nargs="?",
-        default="mistral",
+        default="gemini",
         help="LLM model to use (e.g., mistral, llama3.2, "
         "gemini, mistral-small, mistral-large)",
     )
     parser.add_argument(
         "service",
         nargs="?",
-        default="ollama",
+        default="gemini",
         help="API service to use (e.g., ollama, gemini, mistral)",
     )
     args = parser.parse_args()

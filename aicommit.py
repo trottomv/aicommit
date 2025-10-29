@@ -131,7 +131,7 @@ class AICommitMessageGenerator:
             ```
             {git_diff}
             ```
-        """
+        """  # noqa: E501
         return prompt
 
     def call_gemini_api(self, prompt: str) -> str:

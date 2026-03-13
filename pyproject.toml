@@ -1,7 +1,16 @@
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+skips = [
+  "B310",
+  "B404",
+  "B603",
+  "B607"
+]
+
 [tool.ruff]
 target-version = "py312"
-
 format.docstring-code-format = true
+
 lint.select = [
   "A",   # flake8-builtins
   "B",   # flake8-bugbear
@@ -20,3 +29,4 @@ lint.ignore = [
   "D203",
   "D212",
 ]
+lint.preview = true

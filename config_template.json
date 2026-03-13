@@ -1,0 +1,38 @@
+{
+  "default_model": "gemini",
+  "prompt_template": null,
+  "providers": {
+    "anthropic": {
+      "base_url": "https://api.anthropic.com",
+      "models": {
+        "sonnet": {"model_id": "claude-sonnet-4-20250514"},
+        "opus": {"model_id": "claude-opus-4-20250514"},
+        "haiku": {"model_id": "claude-3-haiku-20240307"}
+      }
+    },
+    "google": {
+      "base_url": "https://generativelanguage.googleapis.com",
+      "models": {
+        "gemini": {"model_id": "gemini-2.5-flash"},
+        "gemini-3": {"model_id": "gemini-3-flash-preview"},
+        "gemini-2.5": {"model_id": "gemini-2.5-flash"},
+        "gemini-2": {"model_id": "gemini-2.0-flash"}
+      }
+    },
+    "mistral": {
+      "base_url": "https://api.mistral.ai",
+      "models": {
+        "mistral": {"model_id": "mistral-large-latest"},
+        "mistral-large": {"model_id": "mistral-large-latest"},
+        "mistral-small": {"model_id": "mistral-small-latest"}
+      }
+    },
+    "ollama": {
+      "base_url": "http://localhost:11434",
+      "models": {
+        "llama3.2": {"model_id": "llama3.2"},
+        "qwen3": {"model_id": "qwen3"}
+      }
+    }
+  }
+}

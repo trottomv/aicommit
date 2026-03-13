@@ -2,15 +2,17 @@
 
 A command-line tool that generates commit messages using Large Language Models (LLMs) from various API providers.
 
-It uses [Gemini API](https://ai.google.dev/gemini-api/docs) or [Mistral API](https://docs.mistral.ai/api/) or Ollama API 
-to generate commit messages based on the changes made in your git repository.
+It uses [Gemini API](https://ai.google.dev/gemini-api/docs), [Mistral API](https://docs.mistral.ai/api/), or [Ollama API](https://github.com/ollama/ollama) to generate commit messages based on the changes made in your git repository.
 
 ## Requirements
+
 - Python >= 3.8
 - git
-- astral uv
-- [Gemini API key](https://ai.google.dev/gemini-api/docs/api-key)
-- [Mistral API key](https://console.mistral.ai/api-keys)
+- [uv](https://github.com/astral-sh/uv) (Python package manager)
+- API Keys (depending on provider):
+  - [Gemini API key](https://ai.google.dev/gemini-api/docs/api-key)
+  - [Mistral API key](https://console.mistral.ai/api-keys)
+  - [Anthropic API key](https://console.anthropic.com/settings/keys)
 
 ## Installation
 
@@ -23,11 +25,13 @@ git clone https://github.com/trottomv/aicommit
 
 ### **Create an alias** and set up environment variables.
 
-Edit `~/.bashrc`
+Edit `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 export GEMINI_API_KEY=<gemini-api-key>
 export MISTRAL_API_KEY=<mistral-api-key>
+export ANTHROPIC_API_KEY=<anthropic-api-key>
+export OLLAMA_BASE_URL=http://localhost:11434  # Optional, for custom Ollama URL
 alias aicommit='uv run --no-project ~/aicommit/aicommit.py'
 ```
 
@@ -35,56 +39,61 @@ Remember to reload your shell configuration `source ~/.bashrc` or open a new ter
 
 ## Usage
 
-After setting up the alias, you can use `aicommit` in your project directory to generate a commit message based on the changes made.
-By default, it will use the `gemini-2.5-flash` model to generate the commit message.
+After setting up the alias, you can use `aicommit` in your project directory:
 
 ```bash
 cd ~/projects/myproject
-aicommit 
+aicommit                    # Uses default model
+aicommit mistral-small      # Use specific model
+aicommit llama3.2           # Use Ollama local model
+aicommit sonnet             # Use Anthropic Claude Sonnet 4
 ```
 
 ### Model Selection
 
-By default, `aicommit` uses the `mistral` model. 
-You can select a different model by passing an argument. 
-The available options are:
+Available models (defined in `config.json`):
 
-| Argument        | Model Used             |
-|-----------------|------------------------|
-| `gemini`        | `gemini-2.5-flash`     |
-| `gemini-2`      | `gemini-2.0-flash`     |
-| `mistral-small` | `mistral-small-latest` |
-| `mistral-large` | `mistral-large-latest` |
-| `mistral`       | `mistral`              |
-| `llama3.2`      | `llama3.2`             |
-| `qwen3`         | `qwen3`                |
+| Argument | Provider | Model ID |
+|----------|----------|----------|
+| `gemini` | Google | `gemini-2.5-flash` |
+| `gemini-2` | Google | `gemini-2.0-flash` |
+| `mistral` | Mistral | `mistral-large-latest` |
+| `mistral-small` | Mistral | `mistral-small-latest` |
+| `llama3.2` | Ollama | `llama3.2` |
+| `kimi` | Ollama | `kimi-k2.5:cloud` |
+| `sonnet` | Anthropic | `claude-sonnet-4-20250514` |
+| `opus` | Anthropic | `claude-opus-4-20250514` |
+| `haiku` | Anthropic | `claude-3-haiku-20240307` |
 
-### Service Selection
+### Configuration
 
-By default, `aicommit` uses the `ollama` service. 
-You can select a different API service by passing an argument. 
-The available options are:
+Edit `config.json` to customize:
 
-| Argument        | API Service Used       |
-|-----------------|------------------------|
-| `ollama`        | `ollama`               |
-| `gemini`        | `gemini`               |
-| `mistral`       | `mistral`              |
+- **Default model**: Set `default_model` value
+- **Base URLs**: Override provider URLs (useful for proxies)
+- **Custom prompt**: Set `prompt_template` with `{git_diff}` placeholder
+- **Add models**: Add entries under `providers.{provider}.models`
 
-**Examples:**
+Example custom config:
+
+```json
+{
+  "default_model": "mistral-small",
+  "prompt_template": "Custom: {git_diff}",
+  "providers": {
+    "ollama": {
+      "base_url": "http://localhost:11434"
+    }
+  }
+}
+```
+
+### Custom Config File
+
+Use `--config` or `-c` to specify a custom config file:
 
 ```bash
-# Use the gemini-2.0-flash model
-aicommit gemini-2 gemini
-
-# Use the mistral-large-latest model
-aicommit mistral-large mistral
-
-# Use the mistral model on ollama api service
-aicommit mistral ollama 
-
-# Use the llama3.2 model on ollama api service
-aicommit llama3.2 ollama 
+aicommit --config ~/.config/aicommit/config.json
 ```
 
 ## Example output
